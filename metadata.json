@@ -1,0 +1,6 @@
+{
+  "name": "Kota Refleksia - Kota Pembelajaran Isometrik",
+  "description": "Kota virtual isometrik 2.5D untuk pembelajaran reflektif siswa SMK/SMA dengan eksplorasi bangunan, obrolan interaktif, refleksi terintegrasi Google Spreadsheet, dan dashboard guru.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

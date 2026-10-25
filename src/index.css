@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Day Mode Cloud Drift */
+@keyframes driftCloudLeft {
+  0% {
+    transform: translateX(-150px);
+  }
+  100% {
+    transform: translateX(calc(100vw + 200px));
+  }
+}
+
+.animate-cloud-slow {
+  animation: driftCloudLeft 45s linear infinite;
+}
+
+.animate-cloud-medium {
+  animation: driftCloudLeft 32s linear infinite;
+}
+
+.animate-cloud-fast {
+  animation: driftCloudLeft 22s linear infinite;
+}
+
+/* Night Mode Kunang-Kunang (Fireflies) Float & Glow */
+@keyframes fireflyWander {
+  0% {
+    transform: translate(0px, 0px) scale(0.85);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(12px, -18px) scale(1.15);
+    opacity: 0.95;
+  }
+  50% {
+    transform: translate(-10px, -32px) scale(0.9);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translate(8px, -15px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0px, 0px) scale(0.85);
+    opacity: 0.3;
+  }
+}
+
+.animate-firefly {
+  animation: fireflyWander 5s ease-in-out infinite;
+}
+
+/* Sun Rays Rotation */
+@keyframes sunSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-sun-spin {
+  animation: sunSpin 60s linear infinite;
+}
+
+/* Smooth transitions */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
