@@ -312,8 +312,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded bg-amber-600 text-white shrink-0">
                   GURU
                 </span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-mono hidden sm:inline border border-emerald-500/30">
-                  Sandi: 11001100
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold hidden sm:inline border border-emerald-500/30">
+                  Terotentikasi 🛡️
                 </span>
               </div>
               <p className="text-[10px] sm:text-xs text-slate-500 truncate">
@@ -327,7 +327,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               <button
                 onClick={onLockPanel}
                 className="px-2.5 py-1.5 rounded-lg bg-amber-600/15 hover:bg-amber-600/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 transition-all active:scale-95"
-                title="Kunci kembali Panel Guru dengan sandi 11001100"
+                title="Kunci kembali akses Panel Guru"
               >
                 <span>🔒</span>
                 <span className="hidden sm:inline">Kunci Panel</span>

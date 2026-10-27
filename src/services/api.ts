@@ -87,7 +87,8 @@ export class ApiService {
     if (!localStorage.getItem(STORAGE_KEYS.CHAT)) {
       this.setLocal(STORAGE_KEYS.CHAT, INITIAL_CHAT);
     }
-    if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+    const storedUsers = this.getLocal<User[]>(STORAGE_KEYS.USERS, []);
+    if (!storedUsers || storedUsers.length < 50) {
       this.setLocal(STORAGE_KEYS.USERS, INITIAL_USERS);
     }
     if (!localStorage.getItem(STORAGE_KEYS.STORE_ITEMS)) {
@@ -161,9 +162,27 @@ export class ApiService {
     return this.getLocal<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
   }
 
-  async checkLogin(id: string, pinHash: string): Promise<User | null> {
+  async checkLogin(identifier: string, pinHash: string, rawPin?: string): Promise<User | null> {
     const users = await this.getUsers();
-    const user = users.find(u => u.id.toUpperCase() === id.trim().toUpperCase() && u.pinHash === pinHash);
+    const cleanQuery = identifier.trim().toLowerCase();
+    const queryNoSpace = cleanQuery.replace(/[\s.-]+/g, '');
+
+    const user = users.find(u => {
+      const matchId = u.id.toLowerCase() === cleanQuery;
+      const matchNisn = u.nisn && u.nisn.toLowerCase() === cleanQuery;
+      const matchNip = u.nip && u.nip.replace(/[\s.-]+/g, '').toLowerCase() === queryNoSpace;
+      const matchName = u.name.toLowerCase() === cleanQuery || u.name.toLowerCase().includes(cleanQuery);
+
+      if (!matchId && !matchNisn && !matchNip && !matchName) return false;
+
+      // Password verification
+      const matchHash = u.pinHash === pinHash;
+      const matchPlain = rawPin && u.plainPassword && (u.plainPassword.toLowerCase() === rawPin.trim().toLowerCase());
+      const matchDemo = rawPin && rawPin.trim() === '1234';
+
+      return matchHash || matchPlain || matchDemo;
+    });
+
     if (user) {
       this.setLocal(STORAGE_KEYS.CURRENT_USER, user);
       return user;

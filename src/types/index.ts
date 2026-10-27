@@ -19,13 +19,18 @@ export interface UserAvatar {
 }
 
 export interface User {
-  id: string; // e.g. SISWA01, GURU01
+  id: string; // e.g. SISWA01, G-01, NISN
   name: string;
   role: Role;
   pinHash: string;
+  plainPassword?: string; // Random generated password (e.g. dkv7821)
+  nip?: string;
+  nisn?: string;
+  gender?: 'L' | 'P';
   points: number;
   avatar: UserAvatar;
-  className?: string; // e.g. "XII RPL 1" or "Guru Produktif RPL"
+  className?: string; // e.g. "10-DKV-1" or "Wali Kelas XII DKV 1"
+  additionalDuty?: string;
   currentBuildingId?: BuildingId | null;
   online: boolean;
   position: { x: number; y: number };

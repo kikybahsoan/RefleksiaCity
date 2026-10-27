@@ -107,12 +107,17 @@ export const INITIAL_BUILDINGS: Building[] = [
   },
 ];
 
+import { SCHOOL_USERS } from '../data/schoolUsers';
+
 export const INITIAL_USERS: User[] = [
+  ...SCHOOL_USERS,
+  // Legacy quick demo accounts
   {
     id: 'GURU01',
     name: 'Ibu Rahmawati, M.Pd.',
     role: 'guru',
     pinHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // 1234
+    plainPassword: '1234',
     points: 1250,
     className: 'Guru Pembina & Refleksi',
     online: true,
@@ -130,8 +135,9 @@ export const INITIAL_USERS: User[] = [
     name: 'Andi Pratama',
     role: 'siswa',
     pinHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // 1234
+    plainPassword: '1234',
     points: 240,
-    className: 'XII RPL 1',
+    className: 'XII DKV 1',
     online: true,
     position: { x: 4, y: 4 },
     avatar: {
@@ -140,57 +146,6 @@ export const INITIAL_USERS: User[] = [
       hairColor: '#1F2937',
       shirtColor: '#2563EB',
       accessory: 'headphone',
-    },
-  },
-  {
-    id: 'SISWA02',
-    name: 'Siti Nurhaliza',
-    role: 'siswa',
-    pinHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // 1234
-    points: 310,
-    className: 'XI TKJ 2',
-    online: true,
-    position: { x: 2, y: 3 },
-    avatar: {
-      skinColor: '#FCE7D2',
-      hairStyle: 'hijab',
-      hairColor: '#B45309',
-      shirtColor: '#E11D48',
-      accessory: 'badge',
-    },
-  },
-  {
-    id: 'SISWA03',
-    name: 'Bima Satria',
-    role: 'siswa',
-    pinHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // 1234
-    points: 180,
-    className: 'XII DKV 1',
-    online: true,
-    position: { x: 7, y: 7 },
-    avatar: {
-      skinColor: '#E4A972',
-      hairStyle: 'cap',
-      hairColor: '#374151',
-      shirtColor: '#10B981',
-      accessory: 'none',
-    },
-  },
-  {
-    id: 'SISWA04',
-    name: 'Nadia Putri',
-    role: 'siswa',
-    pinHash: '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', // 1234
-    points: 420,
-    className: 'XII Akuntansi',
-    online: true,
-    position: { x: 9, y: 8 },
-    avatar: {
-      skinColor: '#F7D0B2',
-      hairStyle: 'long',
-      hairColor: '#4B5563',
-      shirtColor: '#9333EA',
-      accessory: 'glasses',
     },
   },
 ];

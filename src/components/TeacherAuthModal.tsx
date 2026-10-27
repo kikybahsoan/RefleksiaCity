@@ -31,7 +31,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
       onSuccess();
     } else {
       sounds.playPop();
-      setErrorMessage('Kata sandi salah! Pastikan memasukkan sandi 11001100.');
+      setErrorMessage('Kata sandi salah! Akses khusus guru ditolak.');
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
     }
@@ -74,7 +74,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Panel Pengelolaan Guru berisi modul kurikulum AI, penilaian refleksi, dan setting database spreadsheet.
-            Silakan masukkan kata sandi 8 digit guru untuk membuka kunci akses.
+            Silakan masukkan kata sandi rahasia guru untuk membuka kunci akses.
           </p>
 
           {errorMessage && (
@@ -97,7 +97,7 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                   setPinInput(e.target.value);
                   if (errorMessage) setErrorMessage('');
                 }}
-                placeholder="Masukkan sandi..."
+                placeholder="Masukkan kata sandi guru..."
                 className="w-full px-4 py-2.5 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
               <button
@@ -109,14 +109,6 @@ export const TeacherAuthModal: React.FC<TeacherAuthModalProps> = ({
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
-          </div>
-
-          {/* Sandi hint badge */}
-          <div className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 flex items-center justify-between">
-            <span className="font-medium">Kunci Sandi Guru:</span>
-            <span className="font-mono font-bold bg-amber-500/20 px-2 py-0.5 rounded text-xs select-all">
-              11001100
-            </span>
           </div>
 
           {/* Action Buttons */}

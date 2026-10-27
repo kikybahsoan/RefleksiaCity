@@ -1,0 +1,76 @@
+{
+  "sekolah": "SMK Negeri 2 Gorontalo",
+  "program_keahlian": "Desain Komunikasi Visual (DKV)",
+  "tahun_ajaran": "2026/2027",
+  "data_guru": [
+    {
+      "id_guru": "G-01",
+      "nama": "IRFAN SYAHRUL BASRI, S.Pd",
+      "nip": "19890514 201502 1 003",
+      "tugas_tambahan": "Wali Kelas XII DKV 1",
+      "total_jam_mengajar": 32
+    },
+    {
+      "id_guru": "G-02",
+      "nama": "NURLAILA DODA, S.KOM",
+      "nip": "19870321 201101 2 006",
+      "tugas_tambahan": "Wali Kelas XII DKV 2",
+      "total_jam_mengajar": 34
+    },
+    {
+      "id_guru": "G-03",
+      "nama": "ABDUL RAHMAN BAHSOAN, S.SI",
+      "nip": "199011302022211002",
+      "tugas_tambahan": "Ketua Kompetensi Keahlian DKV",
+      "total_jam_mengajar": 32
+    },
+    {
+      "id_guru": "G-04",
+      "nama": "PATRIA WUMU, S.KOM",
+      "nip": "19910815 201903 1 007",
+      "tugas_tambahan": "Wali Kelas XI DKV 1",
+      "total_jam_mengajar": 32
+    },
+    {
+      "id_guru": "G-05",
+      "nama": "SYAHRUL RAMADHAN, S.SI",
+      "nip": "19920410 202012 1 005",
+      "tugas_tambahan": "Wali Kelas X DKV 1",
+      "total_jam_mengajar": 34
+    },
+    {
+      "id_guru": "G-06",
+      "nama": "RIZAL ABDUL, S.KOM",
+      "nip": "19891225 201705 1 004",
+      "tugas_tambahan": "Wali Kelas XI DKV 2",
+      "total_jam_mengajar": 34
+    },
+    {
+      "id_guru": "G-07",
+      "nama": "SARIFIN AHMAD, S.KOM",
+      "nip": "19881109 201403 1 002",
+      "tugas_tambahan": "Wali Kelas X DKV 3",
+      "total_jam_mengajar": 29
+    },
+    {
+      "id_guru": "G-08",
+      "nama": "AYUNITA TULIABU",
+      "nip": "19930617 202104 2 008",
+      "tugas_tambahan": "Wali Kelas XI DKV 3 & Kepala Bengkel DKV",
+      "total_jam_mengajar": 12
+    }
+  ],
+  "ringkasan_siswa": {
+    "total_siswa": 232,
+    "distribusi_rombel": {
+      "10-DKV-1": 25,
+      "10-DKV-2": 26,
+      "10-DKV-3": 25,
+      "11-DKV-1": 28,
+      "11-DKV-2": 29,
+      "11-DKV-3": 29,
+      "12-DKV-1": 35,
+      "12-DKV-2": 35
+    }
+  }
+}

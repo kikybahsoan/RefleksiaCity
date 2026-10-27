@@ -591,6 +591,13 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
     const anchor = baseAnchors[b.id] || { x: 85, y: 105 };
     const isSelected = selectedBuilding?.id === b.id;
 
+    // Occlusion check: when player avatar walks behind or inside the building area
+    const dx = playerPos.x - b.gridX;
+    const dy = playerPos.y - b.gridY;
+    const isPlayerBehind = (dx >= -2.0 && dx <= 1.5 && dy >= -2.0 && dy <= 1.5);
+    // User: "agar avatar bisa terlihat buat gedung pohon agak transparant"
+    const buildingOpacity = isPlayerBehind ? 0.45 : 0.85;
+
     return (
       <div
         key={b.id}
@@ -601,6 +608,8 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
           top: `${iso.y}px`,
           transform: `translate(-${anchor.x}px, -${anchor.y}px)`,
           zIndex: Math.floor((b.gridX + b.gridY) * 10) + 15,
+          opacity: buildingOpacity,
+          transition: 'opacity 0.25s ease-in-out',
         }}
       >
         <div className="relative">
@@ -999,6 +1008,12 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
   // Large lush foliage (88x106) with multi-tiered puffs and deep drop shadows
   const renderTree = (gx: number, gy: number, idx: number) => {
     const iso = toIso(gx, gy);
+    // Tree transparency & avatar occlusion
+    const distToPlayer = Math.hypot(playerPos.x - gx, playerPos.y - gy);
+    const isNearPlayer = distToPlayer < 1.6;
+    // User: "agar avatar bisa terlihat buat gedung pohon agak transparant"
+    const treeOpacity = isNearPlayer ? 0.35 : 0.80;
+
     return (
       <div
         key={`tree_${idx}`}
@@ -1008,6 +1023,8 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
           top: `${iso.y}px`,
           transform: 'translate(-44px, -94px)',
           zIndex: Math.floor((gx + gy) * 10) + 12,
+          opacity: treeOpacity,
+          transition: 'opacity 0.25s ease-in-out',
         }}
       >
         <svg width="88" height="106" viewBox="0 0 88 106">
@@ -1170,7 +1187,7 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
 
     return (
       <div
-        className="absolute pointer-events-none select-none"
+        className="absolute pointer-events-none select-none transition-transform duration-75"
         style={{
           left: `${iso.x}px`,
           top: `${iso.y}px`,
@@ -1179,20 +1196,26 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
         }}
       >
         <div className="flex flex-col items-center">
-          <div className="text-[10px] font-bold text-amber-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tracking-tight whitespace-nowrap mb-0.5">
-            @{currentUser.name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 10)} (Kamu)
+          {/* Beacon tag with role badge */}
+          <div className="flex items-center gap-1 mb-0.5 px-2 py-0.5 rounded-full bg-slate-900/90 border border-amber-400/80 shadow-md backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+            <span className="text-[10px] font-extrabold text-amber-300 tracking-tight whitespace-nowrap">
+              @{currentUser.name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 10)} (Kamu)
+            </span>
           </div>
 
-          <AvatarView
-            avatar={currentUser.avatar}
-            size="md"
-            role={currentUser.role}
-            isWalking={isWalking}
-            walkPhase={walkPhase}
-            facingLeft={facingLeft}
-            isSitting={isSitting}
-            speechText={playerSpeechText || (isSitting ? 'Sedang santai ☕' : undefined)}
-          />
+          <div className="relative drop-shadow-[0_4px_12px_rgba(245,158,11,0.55)]">
+            <AvatarView
+              avatar={currentUser.avatar}
+              size="md"
+              role={currentUser.role}
+              isWalking={isWalking}
+              walkPhase={walkPhase}
+              facingLeft={facingLeft}
+              isSitting={isSitting}
+              speechText={playerSpeechText || (isSitting ? 'Sedang santai ☕' : undefined)}
+            />
+          </div>
         </div>
       </div>
     );

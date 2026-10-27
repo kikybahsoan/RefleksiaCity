@@ -53,8 +53,22 @@ export const HUD: React.FC<HUDProps> = ({
     if (isNowOn) sounds.playPop();
   };
 
+  const getBuildingIcon = (id: string) => {
+    switch (id) {
+      case 'perpustakaan': return '📚';
+      case 'dewankota': return '🏛️';
+      case 'menara': return '📡';
+      case 'polisi': return '🛡️';
+      case 'kafe': return '☕';
+      case 'toko': return '🛍️';
+      case 'bandara': return '✈️';
+      case 'alunalun': return '🌳';
+      default: return '🏛️';
+    }
+  };
+
   const username = `@${currentUser.name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 14)}`;
-  const displayClass = currentUser.className || (currentUser.role === 'guru' ? 'Guru Pembimbing' : 'XII RPL 1');
+  const displayClass = currentUser.className || (currentUser.role === 'guru' ? 'Guru Pembimbing' : 'XII DKV 1');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 px-2.5 sm:px-4 py-2 sm:py-3 pointer-events-none select-none">
@@ -101,45 +115,54 @@ export const HUD: React.FC<HUDProps> = ({
             INFO SETIAP GEDUNG DI HEADER (Ditempatkan persis dibawah icon, nama, saldo sesuai instruksi)
           */}
           {selectedBuilding && (
-            <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-[#18202F]/95 backdrop-blur-md border border-slate-700/80 shadow-2xl animate-fadeIn text-white w-[calc(100vw-1.5rem)] max-w-sm">
-              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
-                <div
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm shrink-0"
-                  style={{ backgroundColor: selectedBuilding.accentColor }}
-                >
-                  🏛️
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] sm:text-xs font-bold leading-tight truncate">
-                      {selectedBuilding.name}
-                    </span>
-                    {selectedBuilding.roleBadgeText && (
-                      <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-medium whitespace-nowrap border border-amber-500/30 shrink-0">
-                        {selectedBuilding.roleBadgeText}
-                      </span>
-                    )}
+            <div className="p-3 rounded-2xl bg-[#121927]/95 backdrop-blur-xl border border-slate-700/80 shadow-2xl animate-fadeIn text-white w-[calc(100vw-1.5rem)] max-w-sm space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-lg font-bold shadow-md shrink-0 border border-white/20"
+                    style={{ backgroundColor: selectedBuilding.accentColor }}
+                  >
+                    {getBuildingIcon(selectedBuilding.id)}
                   </div>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 truncate">
-                    {selectedBuilding.tagline}
-                  </p>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs sm:text-sm font-extrabold leading-tight truncate">
+                        {selectedBuilding.name}
+                      </span>
+                      {selectedBuilding.roleBadgeText && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/25 text-amber-300 font-bold whitespace-nowrap border border-amber-500/40 shrink-0">
+                          {selectedBuilding.roleBadgeText}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-300 truncate">
+                      {selectedBuilding.tagline}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
-                <button
-                  onClick={() => onEnterBuilding?.(selectedBuilding)}
-                  className="px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] sm:text-[11px] font-bold shadow transition-all active:scale-95 flex items-center gap-1"
-                >
-                  <span>Masuk</span>
-                  <span>→</span>
-                </button>
                 <button
                   onClick={onCloseBuildingInfo}
-                  className="p-1 rounded-lg text-slate-400 hover:text-white text-xs"
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-xs shrink-0"
                   title="Tutup info gedung"
                 >
                   ✕
+                </button>
+              </div>
+
+              {/* Action row with Visitor count badge & Enter button */}
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[10px]">
+                <div className="flex items-center gap-1.5 text-slate-400">
+                  <span>👥</span>
+                  <span className="font-medium">{selectedBuilding.visitorCount} kunjungan</span>
+                </div>
+
+                <button
+                  onClick={() => onEnterBuilding?.(selectedBuilding)}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold shadow-md transition-all active:scale-95 flex items-center gap-1.5 text-xs"
+                >
+                  <span>Masuk ke Gedung</span>
+                  <span>→</span>
                 </button>
               </div>
             </div>
