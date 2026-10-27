@@ -348,8 +348,67 @@ export class ApiService {
     };
   }
 
+  // Bidirectional remote synchronization with Google Spreadsheet 'Obrolan' sheet
+  async syncRemoteChat(): Promise<ChatMessage[]> {
+    if (!this.scriptUrl) {
+      return this.getLocal<ChatMessage[]>(STORAGE_KEYS.CHAT, INITIAL_CHAT);
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      // Attempt to pull latest messages from Google Apps Script endpoint via GET
+      const fetchUrl = `${this.scriptUrl}${this.scriptUrl.includes('?') ? '&' : '?'}action=get_chat&room=all&t=${Date.now()}`;
+      const res = await fetch(fetchUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json && Array.isArray(json.data) && json.data.length > 0) {
+          const remoteMessages: ChatMessage[] = json.data;
+          const localMessages = this.getLocal<ChatMessage[]>(STORAGE_KEYS.CHAT, INITIAL_CHAT);
+          const existingIds = new Set(localMessages.map(m => m.id));
+
+          let hasNew = false;
+          remoteMessages.forEach(rm => {
+            if (rm.id && !existingIds.has(rm.id)) {
+              localMessages.push(rm);
+              existingIds.add(rm.id);
+              hasNew = true;
+
+              // Emit new remote message to UI listeners
+              this.chatListeners.forEach(listener => {
+                try { listener(rm); } catch (e) { console.warn(e); }
+              });
+
+              if (this.chatChannel) {
+                this.chatChannel.postMessage({ type: 'NEW_CHAT', message: rm });
+              }
+            }
+          });
+
+          if (hasNew) {
+            this.setLocal(STORAGE_KEYS.CHAT, localMessages);
+          }
+          return localMessages;
+        }
+      }
+    } catch {
+      // Quiet fallback: keep local cache intact
+    }
+
+    return this.getLocal<ChatMessage[]>(STORAGE_KEYS.CHAT, INITIAL_CHAT);
+  }
+
   async getChatMessages(room: string = 'kafe'): Promise<ChatMessage[]> {
     const chat = this.getLocal<ChatMessage[]>(STORAGE_KEYS.CHAT, INITIAL_CHAT);
+    // Trigger background sync with Google Spreadsheet
+    this.syncRemoteChat().catch(() => {});
     return chat.filter(c => c.room === room || room === 'all');
   }
 
@@ -380,12 +439,22 @@ export class ApiService {
       }
     });
 
-    // Remote sync to Google Apps Script
+    // Remote sync to Google Apps Script (Primary POST)
     this.postToAppsScript({
       action: 'send_chat',
       sheet: 'Obrolan',
       data: newMsg,
     });
+
+    // Secondary GET ping fallback to ensure delivery even if POST CORS redirect is blocked by browser policy
+    if (this.scriptUrl) {
+      try {
+        const getSyncUrl = `${this.scriptUrl}${this.scriptUrl.includes('?') ? '&' : '?'}action=send_chat&id=${encodeURIComponent(newMsg.id)}&room=${encodeURIComponent(newMsg.room)}&senderId=${encodeURIComponent(newMsg.senderId)}&senderName=${encodeURIComponent(newMsg.senderName)}&senderRole=${encodeURIComponent(newMsg.senderRole)}&text=${encodeURIComponent(newMsg.text)}&timestamp=${encodeURIComponent(newMsg.timestamp)}`;
+        fetch(getSyncUrl, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+      } catch {
+        // Ignore background ping errors
+      }
+    }
 
     // Simulated responsive classmate/teacher reply if testing in single-player
     if (msg.senderRole === 'siswa') {
@@ -741,6 +810,26 @@ function doPost(e) {
         data.id, data.room, data.senderId, data.senderName, data.senderRole,
         data.text, data.reported ? 'TRUE' : 'FALSE', data.timestamp
       ]);
+    } else if (action === 'get_chat') {
+      var rows = sheet.getDataRange().getValues();
+      var chat = [];
+      for (var i = 1; i < rows.length; i++) {
+        var r = rows[i];
+        if (r[0]) {
+          chat.push({
+            id: String(r[0]),
+            room: String(r[1] || 'kafe'),
+            senderId: String(r[2] || ''),
+            senderName: String(r[3] || ''),
+            senderRole: String(r[4] || 'siswa'),
+            text: String(r[5] || ''),
+            reported: r[6] === true || r[6] === 'TRUE',
+            timestamp: String(r[7] || '')
+          });
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ success: true, data: chat }))
+        .setMimeType(ContentService.MimeType.JSON);
     } else if (action === 'submit_question') {
       sheet.appendRow([
         data.id, data.buildingId, data.studentId, data.studentName,
@@ -766,8 +855,65 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({ status: 'active', app: 'Kota Refleksia API' }))
-    .setMimeType(ContentService.MimeType.JSON);
+  var action = (e && e.parameter && e.parameter.action) || 'status';
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // Sinkronisasi otomatis pesan obrolan langsung via GET
+  if (action === 'get_chat') {
+    var sheet = ss.getSheetByName('Obrolan');
+    if (!sheet) {
+      setupSpreadsheet();
+      sheet = ss.getSheetByName('Obrolan');
+    }
+    var rows = sheet.getDataRange().getValues();
+    var chat = [];
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (r[0]) {
+        chat.push({
+          id: String(r[0]),
+          room: String(r[1] || 'kafe'),
+          senderId: String(r[2] || ''),
+          senderName: String(r[3] || ''),
+          senderRole: String(r[4] || 'siswa'),
+          text: String(r[5] || ''),
+          reported: r[6] === true || r[6] === 'TRUE',
+          timestamp: String(r[7] || '')
+        });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ success: true, data: chat }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Kirim obrolan via GET fallback
+  if (action === 'send_chat') {
+    var chatSheet = ss.getSheetByName('Obrolan');
+    if (!chatSheet) {
+      setupSpreadsheet();
+      chatSheet = ss.getSheetByName('Obrolan');
+    }
+    var p = e.parameter;
+    chatSheet.appendRow([
+      p.id || ('chat_' + Date.now()),
+      p.room || 'kafe',
+      p.senderId || '',
+      p.senderName || '',
+      p.senderRole || 'siswa',
+      p.text || '',
+      'FALSE',
+      p.timestamp || ''
+    ]);
+    return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Pesan obrolan tersimpan di Google Sheets' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({
+    status: 'active',
+    app: 'Kota Refleksia API',
+    sheets: ['Pengguna', 'Bangunan', 'Materi', 'Refleksi', 'Pertanyaan', 'Obrolan', 'Poin', 'Kunjungan'],
+    chatSyncReady: true
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 `;
   }

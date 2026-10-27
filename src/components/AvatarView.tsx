@@ -9,6 +9,7 @@ interface AvatarViewProps {
   isWalking?: boolean;
   walkPhase?: number; // Continuous walk cycle angle in radians (0 to 2*PI)
   facingLeft?: boolean;
+  isSitting?: boolean;
   speechText?: string;
   className?: string;
 }
@@ -21,6 +22,7 @@ export const AvatarView: React.FC<AvatarViewProps> = ({
   isWalking = false,
   walkPhase = 0,
   facingLeft = false,
+  isSitting = false,
   speechText,
   className = '',
 }) => {
@@ -83,7 +85,7 @@ export const AvatarView: React.FC<AvatarViewProps> = ({
       <div
         className="origin-bottom"
         style={{
-          transform: `scaleX(${facingLeft ? -1 : 1}) translateY(${bodyBobY}px) rotate(${bodyLeanAngle}deg)`,
+          transform: `scaleX(${facingLeft ? -1 : 1}) translateY(${isSitting ? 4 : bodyBobY}px) rotate(${isWalking ? bodyLeanAngle : 0}deg)`,
         }}
       >
         <svg
@@ -93,37 +95,54 @@ export const AvatarView: React.FC<AvatarViewProps> = ({
           className="overflow-visible drop-shadow-sm"
           aria-hidden="true"
         >
-          {/* LEFT LEG (Animated smoothly) */}
-          <g
-            style={{
-              transformOrigin: '16px 42px',
-              transform: `rotate(${leftLegAngle}deg) translateY(${-leftKneeY}px)`,
-            }}
-          >
-            {/* Pants/Leg */}
-            <rect x="14" y="42" width="5.5" height="12" rx="2.5" fill="#334155" />
-            {/* Shoe */}
-            <rect x="13" y="52" width="6.5" height="4" rx="2" fill="#1e293b" />
-          </g>
+          {isSitting ? (
+            /* SITTING LEGS (Bent forward at knee, resting comfortably) */
+            <g>
+              {/* Thighs bent forward */}
+              <rect x="14" y="40" width="11" height="5.5" rx="2.5" fill="#334155" />
+              <rect x="22" y="42" width="11" height="5.5" rx="2.5" fill="#1e293b" />
+              {/* Lower calves downward */}
+              <rect x="21" y="43" width="5" height="9" rx="2" fill="#334155" />
+              <rect x="29" y="45" width="5" height="9" rx="2" fill="#1e293b" />
+              {/* Shoes resting on ground */}
+              <rect x="20.5" y="50" width="7" height="4" rx="2" fill="#1e293b" />
+              <rect x="28.5" y="52" width="7" height="4" rx="2" fill="#0f172a" />
+            </g>
+          ) : (
+            <>
+              {/* LEFT LEG (Animated smoothly) */}
+              <g
+                style={{
+                  transformOrigin: '16px 42px',
+                  transform: `rotate(${leftLegAngle}deg) translateY(${-leftKneeY}px)`,
+                }}
+              >
+                {/* Pants/Leg */}
+                <rect x="14" y="42" width="5.5" height="12" rx="2.5" fill="#334155" />
+                {/* Shoe */}
+                <rect x="13" y="52" width="6.5" height="4" rx="2" fill="#1e293b" />
+              </g>
 
-          {/* RIGHT LEG (Animated smoothly) */}
-          <g
-            style={{
-              transformOrigin: '26px 42px',
-              transform: `rotate(${rightLegAngle}deg) translateY(${-rightKneeY}px)`,
-            }}
-          >
-            {/* Pants/Leg */}
-            <rect x="23" y="42" width="5.5" height="12" rx="2.5" fill="#1e293b" />
-            {/* Shoe */}
-            <rect x="22.5" y="52" width="6.5" height="4" rx="2" fill="#0f172a" />
-          </g>
+              {/* RIGHT LEG (Animated smoothly) */}
+              <g
+                style={{
+                  transformOrigin: '26px 42px',
+                  transform: `rotate(${rightLegAngle}deg) translateY(${-rightKneeY}px)`,
+                }}
+              >
+                {/* Pants/Leg */}
+                <rect x="23" y="42" width="5.5" height="12" rx="2.5" fill="#1e293b" />
+                {/* Shoe */}
+                <rect x="22.5" y="52" width="6.5" height="4" rx="2" fill="#0f172a" />
+              </g>
+            </>
+          )}
 
-          {/* LEFT ARM (Opposing leg motion) */}
+          {/* LEFT ARM (Opposing leg motion or resting on lap when sitting) */}
           <g
             style={{
               transformOrigin: '12px 28px',
-              transform: `rotate(${leftArmAngle}deg)`,
+              transform: isSitting ? 'rotate(18deg)' : `rotate(${leftArmAngle}deg)`,
             }}
           >
             <rect x="10" y="28" width="4" height="11" rx="2" fill={shirtColor} />
@@ -135,11 +154,11 @@ export const AvatarView: React.FC<AvatarViewProps> = ({
           {/* Collar detail */}
           <path d="M18 27 L21 31 L24 27" stroke="#ffffff" strokeWidth="1.2" fill="none" opacity="0.65" />
 
-          {/* RIGHT ARM (Opposing leg motion) */}
+          {/* RIGHT ARM (Opposing leg motion or resting on lap when sitting) */}
           <g
             style={{
               transformOrigin: '30px 28px',
-              transform: `rotate(${rightArmAngle}deg)`,
+              transform: isSitting ? 'rotate(-18deg)' : `rotate(${rightArmAngle}deg)`,
             }}
           >
             <rect x="28" y="28" width="4" height="11" rx="2" fill={shirtColor} />

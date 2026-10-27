@@ -46,6 +46,10 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
   const [facingLeft, setFacingLeft] = useState(false);
   const animFrameRef = useRef<number | null>(null);
 
+  // Seating / Tempat Duduk state
+  const [isSitting, setIsSitting] = useState(false);
+  const [sittingBenchId, setSittingBenchId] = useState<string | null>(null);
+
   // Local state for autonomous wandering NPCs
   const [npcs, setNpcs] = useState<LocalNpcState[]>([]);
 
@@ -91,17 +95,123 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
     return { x, y };
   };
 
-  const isWalkableTile = useCallback((gx: number, gy: number) => {
-    if (gx < 1 || gx > 10 || gy < 1 || gy > 10) return false;
-    if (gx === 5 || gy === 5) return true;
-    if (gx >= 4 && gx <= 6 && gy >= 4 && gy <= 6) return true;
-    if ((gx >= 2 && gx <= 9 && (gy === 2 || gy === 8)) || (gy >= 2 && gy <= 8 && (gx === 2 || gx === 9))) {
-      return true;
-    }
-    if (gx === 7 && gy === 6) return true;
-    if (gx === 6 && gy === 3) return true;
-    return false;
+  // Tree coordinates across the map
+  const TREE_COORDS = [
+    [1, 1], [3, 1], [8, 1], [10, 2],
+    [1, 5], [10, 5], [1, 9], [3, 10], [6, 10], [8, 10], [10, 9],
+    [4, 4], [6, 4], [4, 6], [6, 6]
+  ];
+
+  const hasTreeTile = useCallback((gx: number, gy: number) => {
+    return TREE_COORDS.some(([x, y]) => x === gx && y === gy);
   }, []);
+
+  // Building footprint solid obstacle tiles (avatar and NPCs cannot penetrate these)
+  const BUILDING_OBSTACLES = [
+    // Perpustakaan at (2,3)
+    [2, 3], [2, 2], [1, 3], [1, 2],
+    // Dewan Kota at (6,2)
+    [6, 2], [7, 2], [6, 1], [7, 1],
+    // Menara Siaran at (8,4)
+    [8, 4], [8, 3], [9, 4], [9, 3],
+    // Polisi at (2,7)
+    [2, 7], [2, 6], [1, 7], [1, 6],
+    // Kafe at (7,7)
+    [7, 7], [8, 7],
+    // Toko Poin at (4,8)
+    [4, 8], [3, 8], [4, 9], [3, 9],
+    // Bandara at (9,8)
+    [9, 8], [10, 8], [9, 9], [10, 9],
+    // Alun-alun center fountain
+    [5, 5]
+  ];
+
+  // Seating / Benches ("Tempat Duduk")
+  const BENCHES = [
+    { id: 'bench_alun', name: 'Bangku Taman Air Mancur', gx: 4, gy: 5, type: 'stone' as const, label: 'Duduk di Taman Air Mancur 🍃' },
+    { id: 'bench_kafe', name: 'Teras Kafe Kopi', gx: 7, gy: 6, type: 'cafe' as const, label: 'Duduk Santai di Teras Kafe ☕' },
+    { id: 'bench_perpus', name: 'Bangku Baca Perpustakaan', gx: 3, gy: 4, type: 'park' as const, label: 'Duduk Membaca Buku 📖' },
+    { id: 'bench_selatan', name: 'Bangku Teduh Selatan', gx: 5, gy: 7, type: 'park' as const, label: 'Duduk Istirahat Sejenak 🌸' },
+  ];
+
+  const isObstacleTile = useCallback((gx: number, gy: number): boolean => {
+    if (gx < 0 || gx >= GRID_SIZE || gy < 0 || gy >= GRID_SIZE) return true;
+    if (hasTreeTile(gx, gy)) return true;
+    return BUILDING_OBSTACLES.some(([bx, by]) => bx === gx && by === gy);
+  }, [hasTreeTile]);
+
+  const isWalkableTile = useCallback((gx: number, gy: number) => {
+    return !isObstacleTile(gx, gy);
+  }, [isObstacleTile]);
+
+  // Breadth-First Search (BFS) pathfinder on grid ensuring avatar never passes through trees or buildings
+  const findPath = useCallback((startGx: number, startGy: number, targetGx: number, targetGy: number): { x: number; y: number }[] => {
+    let destGx = targetGx;
+    let destGy = targetGy;
+
+    // If destination is an obstacle, redirect to nearest open walkable neighbor
+    if (isObstacleTile(destGx, destGy)) {
+      const candidates = [
+        { x: destGx + 1, y: destGy },
+        { x: destGx - 1, y: destGy },
+        { x: destGx, y: destGy + 1 },
+        { x: destGx, y: destGy - 1 },
+        { x: destGx + 1, y: destGy + 1 },
+        { x: destGx - 1, y: destGy - 1 },
+        { x: destGx + 1, y: destGy - 1 },
+        { x: destGx - 1, y: destGy + 1 },
+      ].filter(c => !isObstacleTile(c.x, c.y));
+
+      if (candidates.length > 0) {
+        candidates.sort((a, b) => Math.hypot(a.x - startGx, a.y - startGy) - Math.hypot(b.x - startGx, b.y - startGy));
+        destGx = candidates[0].x;
+        destGy = candidates[0].y;
+      } else {
+        return [{ x: startGx, y: startGy }];
+      }
+    }
+
+    if (startGx === destGx && startGy === destGy) {
+      return [{ x: destGx, y: destGy }];
+    }
+
+    const queue: { x: number; y: number; path: { x: number; y: number }[] }[] = [
+      { x: startGx, y: startGy, path: [{ x: startGx, y: startGy }] }
+    ];
+    const visited = new Set<string>();
+    visited.add(`${startGx},${startGy}`);
+
+    const directions = [
+      { dx: 1, dy: 0 },
+      { dx: -1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 0, dy: -1 },
+    ];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (current.x === destGx && current.y === destGy) {
+        return current.path;
+      }
+
+      for (const dir of directions) {
+        const nx = current.x + dir.dx;
+        const ny = current.y + dir.dy;
+        const key = `${nx},${ny}`;
+
+        if (!visited.has(key) && !isObstacleTile(nx, ny)) {
+          visited.add(key);
+          queue.push({
+            x: nx,
+            y: ny,
+            path: [...current.path, { x: nx, y: ny }]
+          });
+        }
+      }
+    }
+
+    return [{ x: destGx, y: destGy }];
+  }, [isObstacleTile]);
 
   // Autonomous NPC random wandering simulation with smooth humanoid steps
   useEffect(() => {
@@ -280,7 +390,8 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
     setIsDragging(false);
   };
 
-  // Humanized, smooth humanoid walking with smoothstep interpolation and cancel safety
+  // Humanized, leisurely strolling along BFS path preventing passing through trees & buildings
+  // User: "pergerakan avatar saat bergerak ke arah krusor buat pelan-pelan"
   const moveToCoordinate = useCallback((targetX: number, targetY: number, onArrival?: () => void) => {
     // Cancel any ongoing walk animation
     if (animFrameRef.current) {
@@ -288,62 +399,81 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
       animFrameRef.current = null;
     }
 
+    // If currently sitting, stand up smoothly
+    if (isSitting) {
+      setIsSitting(false);
+      setSittingBenchId(null);
+    }
+
+    const startGx = Math.round(playerPos.x);
+    const startGy = Math.round(playerPos.y);
+
+    const waypoints = findPath(startGx, startGy, targetX, targetY);
+    if (waypoints.length <= 1) {
+      if (onArrival) onArrival();
+      return;
+    }
+
     setIsWalking(true);
     sounds.playFootstep();
 
-    const startX = playerPos.x;
-    const startY = playerPos.y;
-    setFacingLeft(targetX < startX || (targetX === startX && targetY > startY));
+    // Leisurely, peaceful stroll pacing: 550ms per tile step
+    const STEP_DURATION = 550;
+    let stepIndex = 0;
 
-    const distance = Math.hypot(targetX - startX, targetY - startY);
-    // Smooth, responsive duration: 450ms for short steps, scaling up to 1800ms
-    const duration = Math.min(1800, Math.max(450, distance * 280));
-
-    const startTime = performance.now();
-    let lastStepTime = startTime;
-
-    const animateWalk = (time: number) => {
-      const elapsed = time - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      // Smoothstep easing: S-curve with zero acceleration at start and finish
-      const ease = progress * progress * (3 - 2 * progress);
-
-      const currentX = startX + (targetX - startX) * ease;
-      const currentY = startY + (targetY - startY) * ease;
-
-      setPlayerPos({ x: currentX, y: currentY });
-
-      // Continuous gait cycle (step cadence ~200ms per footfall)
-      const currentPhase = (elapsed / 200) * Math.PI * 2;
-      setWalkPhase(currentPhase);
-
-      if (time - lastStepTime > 200) {
-        lastStepTime = time;
-        sounds.playFootstep();
-      }
-
-      if (progress < 1) {
-        animFrameRef.current = requestAnimationFrame(animateWalk);
-      } else {
-        animFrameRef.current = null;
-        setPlayerPos({ x: targetX, y: targetY });
+    const executeNextStep = () => {
+      if (stepIndex >= waypoints.length - 1) {
         setIsWalking(false);
         setWalkPhase(0);
+        const finalWaypoint = waypoints[waypoints.length - 1];
+        setPlayerPos(finalWaypoint);
         if (onPlayerMove) {
-          onPlayerMove({ x: targetX, y: targetY });
+          onPlayerMove(finalWaypoint);
         }
         if (onArrival) {
           onArrival();
         }
+        return;
       }
+
+      const fromPoint = waypoints[stepIndex];
+      const toPoint = waypoints[stepIndex + 1];
+      setFacingLeft(toPoint.x < fromPoint.x || (toPoint.x === fromPoint.x && toPoint.y > fromPoint.y));
+
+      const stepStartTime = performance.now();
+      sounds.playFootstep();
+
+      const stepAnimation = (time: number) => {
+        const elapsed = time - stepStartTime;
+        const progress = Math.min(1, elapsed / STEP_DURATION);
+        // Smooth S-curve easing
+        const ease = progress * progress * (3 - 2 * progress);
+
+        const currentX = fromPoint.x + (toPoint.x - fromPoint.x) * ease;
+        const currentY = fromPoint.y + (toPoint.y - fromPoint.y) * ease;
+
+        setPlayerPos({ x: currentX, y: currentY });
+
+        // Natural leg swing gait cycle
+        const currentPhase = (elapsed / 275) * Math.PI * 2;
+        setWalkPhase(currentPhase);
+
+        if (progress < 1) {
+          animFrameRef.current = requestAnimationFrame(stepAnimation);
+        } else {
+          stepIndex++;
+          executeNextStep();
+        }
+      };
+
+      animFrameRef.current = requestAnimationFrame(stepAnimation);
     };
 
-    animFrameRef.current = requestAnimationFrame(animateWalk);
-  }, [playerPos, onPlayerMove]);
+    executeNextStep();
+  }, [playerPos, isSitting, findPath, onPlayerMove]);
 
   // Click on building:
-  // "info setiap gedung pindahkan di header, dibawah icon, nama, saldo"
-  // Clicking building walks to it AND selects it so the info is shown in the header!
+  // Info is shown in header, and avatar walks safely to entrance without penetrating building
   const handleBuildingTouch = (e: React.MouseEvent, b: Building) => {
     e.stopPropagation();
     sounds.playPop();
@@ -351,14 +481,53 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
     // Notify parent to display info in the Header (underneath icon, name, saldo)
     onSelectBuilding(b);
 
-    const entranceX = b.gridX + (b.id === 'perpustakaan' ? 1 : 0);
-    const entranceY = b.gridY + 1;
-    moveToCoordinate(entranceX, entranceY);
+    const entranceMap: Record<string, { x: number; y: number }> = {
+      perpustakaan: { x: 3, y: 4 },
+      dewankota: { x: 6, y: 3 },
+      menara: { x: 7, y: 4 },
+      polisi: { x: 3, y: 7 },
+      kafe: { x: 6, y: 7 },
+      toko: { x: 4, y: 7 },
+      bandara: { x: 8, y: 8 },
+      alunalun: { x: 5, y: 6 },
+    };
+
+    const entrance = entranceMap[b.id] || { x: b.gridX, y: b.gridY + 1 };
+    moveToCoordinate(entrance.x, entrance.y);
   };
 
   const handleTileClick = (gx: number, gy: number) => {
     if (isDragging) return;
+    if (isObstacleTile(gx, gy)) {
+      // If clicking an obstacle directly, still navigate to closest neighbor
+      moveToCoordinate(gx, gy);
+      return;
+    }
     moveToCoordinate(gx, gy);
+  };
+
+  // Seating / Tempat Duduk click handler
+  const handleBenchClick = (bench: { id: string; name: string; gx: number; gy: number }) => {
+    sounds.playPop();
+
+    if (isSitting && sittingBenchId === bench.id) {
+      // Stand up if already sitting here
+      setIsSitting(false);
+      setSittingBenchId(null);
+      return;
+    }
+
+    moveToCoordinate(bench.gx, bench.gy, () => {
+      setIsSitting(true);
+      setSittingBenchId(bench.id);
+      sounds.playPop();
+    });
+  };
+
+  const handleStandUp = () => {
+    setIsSitting(false);
+    setSittingBenchId(null);
+    sounds.playPop();
   };
 
   const isRoadTile = (gx: number, gy: number) => {
@@ -371,14 +540,6 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
     return false;
   };
 
-  const hasTreeTile = (gx: number, gy: number) => {
-    const treeCoords = [
-      [1, 1], [3, 1], [8, 1], [10, 2],
-      [1, 5], [10, 5], [1, 9], [3, 10], [6, 10], [8, 10], [10, 9],
-      [4, 4], [6, 4], [4, 6], [6, 6]
-    ];
-    return treeCoords.some(([x, y]) => x === gx && y === gy);
-  };
 
   const streetLamps = [
     { x: 3, y: 3 },
@@ -908,6 +1069,101 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
     );
   };
 
+  //
+  // RENDER INTERACTIVE BENCHES ("TEMPAT DUDUK")
+  // User: "buatkan tempat duduk"
+  // Beautiful wooden, stone, and cafe terrace benches that avatars can sit on
+  const renderBench = (bench: (typeof BENCHES)[0]) => {
+    const iso = toIso(bench.gx, bench.gy);
+    const isOccupied = isSitting && sittingBenchId === bench.id;
+
+    return (
+      <div
+        key={bench.id}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleBenchClick(bench);
+        }}
+        className="absolute cursor-pointer select-none group"
+        style={{
+          left: `${iso.x}px`,
+          top: `${iso.y}px`,
+          transform: 'translate(-28px, -22px)',
+          zIndex: Math.floor((bench.gx + bench.gy) * 10) + 11,
+        }}
+        title={bench.label}
+      >
+        <div className="relative">
+          {/* Tooltip on hover */}
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+            <span className="px-2 py-0.5 rounded-full bg-slate-900/90 text-white text-[9px] font-bold shadow-md border border-slate-700">
+              {isOccupied ? 'Klik untuk Berdiri 🚶' : `🪑 ${bench.name}`}
+            </span>
+          </div>
+
+          {bench.type === 'park' && (
+            <svg width="56" height="40" viewBox="0 0 56 40" className="overflow-visible drop-shadow-sm">
+              {/* Ground Contact Shadow */}
+              <ellipse cx="28" cy="33" rx="20" ry="6" fill="rgba(0,0,0,0.26)" />
+              {/* Iron Legs */}
+              <line x1="14" y1="26" x2="14" y2="33" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="42" y1="26" x2="42" y2="33" stroke="#1E293B" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="20" y1="22" x2="20" y2="30" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+              <line x1="46" y1="22" x2="46" y2="30" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+              {/* Wooden Seat Slats */}
+              <polygon points="12,26 38,13 46,17 20,30" fill="#B45309" stroke="#78350F" strokeWidth="0.8" />
+              <polygon points="10,23 36,10 40,12 14,25" fill="#D97706" stroke="#92400E" strokeWidth="0.8" />
+              {/* Wooden Backrest Slats */}
+              <polygon points="12,17 38,04 40,06 14,19" fill="#B45309" stroke="#78350F" strokeWidth="0.8" />
+              <polygon points="10,12 36,00 38,02 12,14" fill="#D97706" stroke="#92400E" strokeWidth="0.8" />
+              {/* Iron Armrests */}
+              <path d="M10 23 Q8 15 14 17" stroke="#1E293B" strokeWidth="2" fill="none" strokeLinecap="round" />
+              <path d="M38 11 Q36 03 42 05" stroke="#1E293B" strokeWidth="2" fill="none" strokeLinecap="round" />
+            </svg>
+          )}
+
+          {bench.type === 'cafe' && (
+            <svg width="60" height="44" viewBox="0 0 60 44" className="overflow-visible drop-shadow-sm">
+              {/* Ground Shadow */}
+              <ellipse cx="30" cy="36" rx="22" ry="7" fill="rgba(0,0,0,0.26)" />
+              {/* Left Chair */}
+              <ellipse cx="15" cy="32" rx="7" ry="3.5" fill="#A16207" />
+              <line x1="15" y1="32" x2="15" y2="21" stroke="#78350F" strokeWidth="2" />
+              <polygon points="11,21 19,21 19,25 11,25" fill="#D97706" />
+              {/* Right Chair */}
+              <ellipse cx="45" cy="28" rx="7" ry="3.5" fill="#A16207" />
+              <line x1="45" y1="28" x2="45" y2="17" stroke="#78350F" strokeWidth="2" />
+              <polygon points="41,17 49,17 49,21 41,21" fill="#D97706" />
+              {/* Round Bistro Table */}
+              <line x1="30" y1="26" x2="30" y2="37" stroke="#475569" strokeWidth="3" />
+              <ellipse cx="30" cy="37" rx="8" ry="3" fill="#334155" />
+              <ellipse cx="30" cy="25" rx="15" ry="7.5" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1" />
+              <ellipse cx="30" cy="24" rx="12" ry="5.5" fill="#F1F5F9" />
+              {/* Steaming Coffee Cup */}
+              <ellipse cx="30" cy="22" rx="3.5" ry="2" fill="#78350F" />
+              <rect x="28" y="19" width="4" height="3" rx="1" fill="#FFFFFF" />
+              <path d="M30 18 Q31 15 30 13" stroke="#CBD5E1" strokeWidth="1" fill="none" strokeLinecap="round" className="animate-pulse" />
+            </svg>
+          )}
+
+          {bench.type === 'stone' && (
+            <svg width="56" height="40" viewBox="0 0 56 40" className="overflow-visible drop-shadow-sm">
+              {/* Ground Shadow */}
+              <ellipse cx="28" cy="32" rx="20" ry="6" fill="rgba(0,0,0,0.26)" />
+              {/* Carved Granite Pedestals */}
+              <rect x="14" y="24" width="6" height="8" rx="1" fill="#94A3B8" />
+              <rect x="36" y="14" width="6" height="8" rx="1" fill="#94A3B8" />
+              {/* Marble Slab Top */}
+              <polygon points="10,24 36,11 46,16 20,29" fill="#E2E8F0" stroke="#CBD5E1" strokeWidth="1" />
+              <polygon points="10,24 20,29 20,32 10,27" fill="#94A3B8" />
+              <polygon points="20,29 46,16 46,19 20,32" fill="#64748B" />
+            </svg>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Render Current Player Avatar (Miniature cute avatar)
   const renderPlayer = () => {
     const iso = toIso(playerPos.x, playerPos.y);
@@ -934,7 +1190,8 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
             isWalking={isWalking}
             walkPhase={walkPhase}
             facingLeft={facingLeft}
-            speechText={playerSpeechText}
+            isSitting={isSitting}
+            speechText={playerSpeechText || (isSitting ? 'Sedang santai ☕' : undefined)}
           />
         </div>
       </div>
@@ -951,7 +1208,7 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className={`relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing select-none transition-colors duration-700 ${
+      className={`relative w-full h-full overflow-hidden cursor-grab active:cursor-grabbing select-none touch-none transition-colors duration-700 ${
         isDarkMode
           ? 'bg-gradient-to-b from-[#060A14] via-[#0C1427] to-[#121E36]'
           : 'bg-gradient-to-b from-[#87CEEB] via-[#BAE6FD] to-[#E0F2FE]'
@@ -1154,6 +1411,9 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
           })
         )}
 
+        {/* Interactive Benches ("Tempat Duduk") */}
+        {BENCHES.map(b => renderBench(b))}
+
         {/* 8 Clickable Buildings (Matching exact screenshots, grounded on tiles) */}
         {buildings.map(b => renderBuilding(b))}
 
@@ -1164,25 +1424,39 @@ export const IsometricMap: React.FC<IsometricMapProps> = ({
         {renderPlayer()}
       </div>
 
-      {/* Floating Zoom & Center Camera Controls on bottom right */}
-      <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-30">
+      {/* Floating Stand-Up Action when avatar is sitting */}
+      {isSitting && (
+        <div className="absolute top-28 sm:top-24 left-1/2 -translate-x-1/2 z-40 pointer-events-auto animate-bounce">
+          <button
+            onClick={handleStandUp}
+            className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-2xl border border-emerald-400/60 flex items-center gap-1.5 transition-all active:scale-95"
+            title="Bangun dan Berdiri"
+          >
+            <span>🚶</span>
+            <span>Berdiri dari Bangku</span>
+          </button>
+        </div>
+      )}
+
+      {/* Floating Zoom & Center Camera Controls (Thumb-friendly mobile positioning) */}
+      <div className="absolute bottom-24 right-3 sm:bottom-6 sm:right-6 flex flex-col gap-2 z-30 pointer-events-auto">
         <button
           onClick={() => handleZoom(0.2)}
-          className="w-9 h-9 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white shadow-lg border border-slate-700/80 flex items-center justify-center font-bold active:scale-95 transition-all"
+          className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white shadow-lg border border-slate-700/80 flex items-center justify-center font-bold text-base sm:text-sm active:scale-95 transition-all"
           title="Perbesar Peta (+)"
         >
           +
         </button>
         <button
           onClick={() => handleZoom(-0.2)}
-          className="w-9 h-9 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white shadow-lg border border-slate-700/80 flex items-center justify-center font-bold active:scale-95 transition-all"
+          className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white shadow-lg border border-slate-700/80 flex items-center justify-center font-bold text-base sm:text-sm active:scale-95 transition-all"
           title="Perkecil Peta (-)"
         >
           -
         </button>
         <button
           onClick={handleResetCamera}
-          className="w-9 h-9 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white shadow-lg border border-slate-700/80 flex items-center justify-center text-xs active:scale-95 transition-all"
+          className="w-10 h-10 sm:w-9 sm:h-9 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white shadow-lg border border-slate-700/80 flex items-center justify-center text-sm sm:text-xs active:scale-95 transition-all"
           title="Pusatkan ke Avatarmu"
         >
           📍

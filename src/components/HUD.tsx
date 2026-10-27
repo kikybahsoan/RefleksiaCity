@@ -57,41 +57,41 @@ export const HUD: React.FC<HUDProps> = ({
   const displayClass = currentUser.className || (currentUser.role === 'guru' ? 'Guru Pembimbing' : 'XII RPL 1');
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 px-4 py-3 pointer-events-none select-none">
-      <div className="w-full flex items-start justify-between gap-4">
+    <header className="fixed top-0 left-0 right-0 z-40 px-2.5 sm:px-4 py-2 sm:py-3 pointer-events-none select-none">
+      <div className="w-full flex items-start justify-between gap-2 sm:gap-4">
         {/* 
           LEFT ZONE:
           1. [ ‹ ] [ (avatar) @username  🪙 points saldo ]
           2. INFO GEDUNG DI HEADER (DIBAWAH ICON, NAMA, SALDO)
         */}
-        <div className="pointer-events-auto flex flex-col items-start gap-2">
+        <div className="pointer-events-auto flex flex-col items-start gap-1.5 sm:gap-2">
           {/* Top capsule: User identity & saldo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {/* Back / Switch account button */}
             <button
               onClick={onLogout}
-              className="w-10 h-10 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95 shrink-0"
               title="Ganti Akun / Keluar"
             >
-              <span className="text-sm font-bold">‹</span>
+              <span className="text-xs sm:text-sm font-bold">‹</span>
             </button>
 
             {/* User profile capsule with avatar, username, and coin points balance */}
-            <div className="flex items-center gap-3 px-3.5 py-1.5 rounded-full bg-[#18202F]/90 backdrop-blur-md border border-slate-700/80 shadow-lg text-white">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-amber-400 flex items-center justify-center shrink-0 border border-white/30">
+            <div className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#18202F]/90 backdrop-blur-md border border-slate-700/80 shadow-lg text-white">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden bg-amber-400 flex items-center justify-center shrink-0 border border-white/30">
                 <AvatarView avatar={currentUser.avatar} size="sm" />
               </div>
 
-              <div className="flex flex-col pr-1">
-                <span className="text-xs font-bold leading-tight tracking-tight">
+              <div className="flex flex-col pr-0.5 sm:pr-1">
+                <span className="text-[11px] sm:text-xs font-bold leading-tight tracking-tight max-w-[80px] sm:max-w-none truncate">
                   {username}
                 </span>
-                <div className="flex items-center gap-1 text-[11px] text-amber-300 font-mono">
+                <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-amber-300 font-mono">
                   <span>🪙</span>
                   <span className="font-bold tabular-nums">
                     {currentUser.points.toLocaleString('id-ID')}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-normal">saldo</span>
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-normal hidden xs:inline">saldo</span>
                 </div>
               </div>
             </div>
@@ -101,35 +101,35 @@ export const HUD: React.FC<HUDProps> = ({
             INFO SETIAP GEDUNG DI HEADER (Ditempatkan persis dibawah icon, nama, saldo sesuai instruksi)
           */}
           {selectedBuilding && (
-            <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-[#18202F]/95 backdrop-blur-md border border-slate-700/80 shadow-2xl animate-fadeIn text-white max-w-sm">
-              <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-between gap-2 sm:gap-3 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-[#18202F]/95 backdrop-blur-md border border-slate-700/80 shadow-2xl animate-fadeIn text-white w-[calc(100vw-1.5rem)] max-w-sm">
+              <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
                 <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold shadow-sm shrink-0"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold shadow-sm shrink-0"
                   style={{ backgroundColor: selectedBuilding.accentColor }}
                 >
                   🏛️
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold leading-tight whitespace-nowrap">
+                    <span className="text-[11px] sm:text-xs font-bold leading-tight truncate">
                       {selectedBuilding.name}
                     </span>
                     {selectedBuilding.roleBadgeText && (
-                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-medium whitespace-nowrap border border-amber-500/30">
+                      <span className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-medium whitespace-nowrap border border-amber-500/30 shrink-0">
                         {selectedBuilding.roleBadgeText}
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-400 line-clamp-1">
+                  <p className="text-[9px] sm:text-[10px] text-slate-400 truncate">
                     {selectedBuilding.tagline}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0 pl-1">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1">
                 <button
                   onClick={() => onEnterBuilding?.(selectedBuilding)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold shadow transition-all active:scale-95 flex items-center gap-1"
+                  className="px-2 sm:px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] sm:text-[11px] font-bold shadow transition-all active:scale-95 flex items-center gap-1"
                 >
                   <span>Masuk</span>
                   <span>→</span>
@@ -150,30 +150,32 @@ export const HUD: React.FC<HUDProps> = ({
           RIGHT ZONE:
           [ 🕒 Waktu Realtime ] [ 🎓 Kelas Siswa ] [ 🔊 Suara Damai ] + [ 📋 Panel Guru ] [ 📊 Sheets ]
         */}
-        <div className="pointer-events-auto flex items-center gap-2">
+        <div className="pointer-events-auto flex items-center gap-1 sm:gap-2">
           {/* Waktu yang tersinkronkan dengan waktu saat ini */}
           <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18202F]/90 backdrop-blur-md border border-slate-700/80 shadow-lg text-xs font-medium text-amber-300 font-mono"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[#18202F]/90 backdrop-blur-md border border-slate-700/80 shadow-lg text-[10px] sm:text-xs font-medium text-amber-300 font-mono"
             title="Waktu Real-time Tersinkron"
           >
             <span>🕒</span>
-            <span className="tabular-nums font-semibold">{currentTimeStr || '16:51 WIB'}</span>
+            <span className="tabular-nums font-semibold hidden sm:inline">{currentTimeStr || '16:51 WIB'}</span>
+            <span className="tabular-nums font-semibold sm:hidden">{currentTimeStr ? currentTimeStr.slice(0, 5) : '16:51'}</span>
           </div>
 
           {/* Kelas Siswa / Guru */}
           <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18202F]/90 backdrop-blur-md border border-slate-700/80 shadow-lg text-xs font-semibold text-emerald-400"
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18202F]/90 backdrop-blur-md border border-slate-700/80 shadow-lg text-xs font-semibold text-emerald-400"
             title="Kelas Siswa / Pembina"
           >
             <span>🎓</span>
-            <span>{displayClass}</span>
+            <span className="truncate max-w-[120px]">{displayClass}</span>
           </div>
 
           {/* Teacher Dashboard Trigger (for Guru role) */}
           {currentUser.role === 'guru' && onOpenTeacherPanel && (
             <button
               onClick={onOpenTeacherPanel}
-              className="px-3 py-1.5 rounded-full bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-1.5"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-600 hover:bg-amber-500 text-white text-[11px] sm:text-xs font-bold shadow-lg transition-all active:scale-95 flex items-center gap-1 shrink-0"
+              title="Panel Pengelolaan Guru"
             >
               <span>📋</span>
               <span className="hidden sm:inline">Panel Guru</span>
@@ -183,7 +185,7 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Google Sheets API Config */}
           <button
             onClick={onOpenSheetsConfig}
-            className="w-9 h-9 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95 shrink-0"
             title="Pengaturan Google Spreadsheet (Tersinkron Otomatis)"
           >
             <span className="text-xs">📊</span>
@@ -192,7 +194,7 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Notifications */}
           <button
             onClick={onOpenNotifications}
-            className="w-9 h-9 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95 shrink-0"
             title="Pusat Notifikasi"
           >
             <span className="text-xs">🔔</span>
@@ -201,9 +203,9 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Peaceful Ambient Soundscape Toggle */}
           <button
             onClick={toggleSound}
-            className={`w-9 h-9 rounded-full ${
+            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full ${
               soundEnabled ? 'bg-emerald-600/90 text-white shadow-emerald-500/20' : 'bg-[#18202F]/90 text-slate-400'
-            } hover:bg-[#253247] flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95`}
+            } hover:bg-[#253247] flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95 shrink-0`}
             title={soundEnabled ? 'Matikan Suara Damai Lofi & Kicauan Burung' : 'Putar Suara Damai & Kicauan Burung'}
           >
             <span className="text-xs">{soundEnabled ? '🔊' : '🔇'}</span>
@@ -212,7 +214,7 @@ export const HUD: React.FC<HUDProps> = ({
           {/* Dark / Light Toggle */}
           <button
             onClick={onToggleDarkMode}
-            className="w-9 h-9 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#18202F]/90 hover:bg-[#253247] text-white flex items-center justify-center border border-slate-700/80 shadow-lg backdrop-blur-md transition-all active:scale-95 shrink-0"
             title={isDarkMode ? 'Beralih ke Mode Siang (Awan & Matahari)' : 'Beralih ke Mode Malam (Kunang-Kunang & Bintang)'}
           >
             <span className="text-xs">{isDarkMode ? '☀️' : '🌙'}</span>

@@ -293,9 +293,9 @@ export const BuildingModal: React.FC<BuildingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
       <div
-        className={`w-full max-w-4xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden border transition-colors ${
+        className={`w-full max-w-4xl max-h-[94vh] sm:max-h-[92vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden border transition-colors ${
           isDarkMode
             ? 'bg-slate-900 text-slate-100 border-slate-800'
             : 'bg-[#FAF8F5] text-slate-800 border-stone-200'
@@ -303,31 +303,31 @@ export const BuildingModal: React.FC<BuildingModalProps> = ({
       >
         {/* Header Zone: Building Identity + Back/Close Button */}
         <div
-          className="px-6 py-4 flex items-center justify-between border-b"
+          className="px-3.5 sm:px-6 py-2.5 sm:py-4 flex items-center justify-between border-b"
           style={{
             borderColor: isDarkMode ? '#1E293B' : '#E7E5E4',
             backgroundColor: isDarkMode ? '#0F172A' : '#FFFFFF',
           }}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-sm shrink-0"
               style={{ backgroundColor: building.accentColor }}
             >
               🏛️
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold tracking-tight">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-lg font-bold tracking-tight truncate">
                   {building.name}
                 </h2>
                 {building.roleBadgeText && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60">
+                  <span className="text-[10px] sm:text-xs font-semibold px-1.5 sm:px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200/80 dark:border-amber-900/60 shrink-0">
                     {building.roleBadgeText}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                 {building.tagline}
               </p>
             </div>
@@ -335,16 +335,16 @@ export const BuildingModal: React.FC<BuildingModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
             title="Kembali ke Peta Kota"
           >
-            <span className="text-sm font-semibold">✕ Tutup</span>
+            <span className="text-xs sm:text-sm font-semibold">✕ Tutup</span>
           </button>
         </div>
 
         {/* 4 Standard Tabs + 1 Building-Specific Tab */}
         <div
-          className="flex items-center gap-1 px-4 sm:px-6 pt-3 pb-2 border-b overflow-x-auto no-scrollbar"
+          className="flex items-center gap-1 px-2.5 sm:px-6 pt-2 sm:pt-3 pb-2 border-b overflow-x-auto no-scrollbar"
           style={{ borderColor: isDarkMode ? '#1E293B' : '#E7E5E4' }}
         >
           <button

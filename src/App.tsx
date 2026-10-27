@@ -9,6 +9,7 @@ import { LoginModal } from './components/LoginModal';
 import { SheetsConfigModal } from './components/SheetsConfigModal';
 import { NotificationManager } from './components/NotificationManager';
 import { BottomChatOverlay } from './components/BottomChatOverlay';
+import { TeacherAuthModal } from './components/TeacherAuthModal';
 import { filterProfanity } from './utils/filter';
 import { sounds } from './utils/audio';
 
@@ -25,6 +26,8 @@ export default function App() {
 
   // Modals
   const [showTeacherPanel, setShowTeacherPanel] = useState(false);
+  const [isTeacherPanelUnlocked, setIsTeacherPanelUnlocked] = useState(false);
+  const [showTeacherAuthModal, setShowTeacherAuthModal] = useState(false);
   const [showSheetsConfig, setShowSheetsConfig] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -87,7 +90,7 @@ export default function App() {
     };
   }, []);
 
-  // Real-Time Live Chat Subscription (Instant zero-delay sync across tabs and users)
+  // Real-Time Live Chat Subscription (Instant zero-delay sync across tabs and remote spreadsheet)
   useEffect(() => {
     const unsubscribe = api.subscribeToLiveChat((newMsg) => {
       setChatMessages((prev) => {
@@ -96,10 +99,14 @@ export default function App() {
       });
     });
 
-    // 5-second polling for Google Apps Script remote sync
+    // 3.5-second polling for Google Apps Script remote sync so students and teachers can chat in real-time
     const interval = setInterval(() => {
-      api.getChatMessages('all').then(setChatMessages);
-    }, 5000);
+      api.syncRemoteChat().then((messages) => {
+        if (messages && messages.length > 0) {
+          setChatMessages(messages);
+        }
+      });
+    }, 3500);
 
     return () => {
       unsubscribe();
@@ -153,6 +160,26 @@ export default function App() {
     api.getChatMessages('all').then(setChatMessages);
   };
 
+  // Teacher Panel Unlock & Lock Handlers (Locked with Passcode 11001100)
+  const handleOpenTeacherPanel = () => {
+    if (isTeacherPanelUnlocked) {
+      setShowTeacherPanel(true);
+    } else {
+      setShowTeacherAuthModal(true);
+    }
+  };
+
+  const handleTeacherAuthSuccess = () => {
+    setIsTeacherPanelUnlocked(true);
+    setShowTeacherAuthModal(false);
+    setShowTeacherPanel(true);
+  };
+
+  const handleLockTeacherPanel = () => {
+    setIsTeacherPanelUnlocked(false);
+    setShowTeacherPanel(false);
+  };
+
   // Logout handler
   const handleLogout = () => {
     api.setCurrentUser(null);
@@ -160,6 +187,7 @@ export default function App() {
     setSelectedBuilding(null);
     setActiveBuilding(null);
     setShowTeacherPanel(false);
+    setIsTeacherPanelUnlocked(false);
   };
 
   // Login handler
@@ -188,7 +216,7 @@ export default function App() {
             selectedBuilding={selectedBuilding}
             onEnterBuilding={(b) => setActiveBuilding(b)}
             onCloseBuildingInfo={() => setSelectedBuilding(null)}
-            onOpenTeacherPanel={() => setShowTeacherPanel(true)}
+            onOpenTeacherPanel={handleOpenTeacherPanel}
             onOpenSheetsConfig={() => setShowSheetsConfig(true)}
             onOpenNotifications={() => setShowNotifications(true)}
             onLogout={handleLogout}
@@ -240,12 +268,23 @@ export default function App() {
               currentUser={currentUser}
               buildings={buildings}
               onClose={() => setShowTeacherPanel(false)}
+              onLockPanel={handleLockTeacherPanel}
               isDarkMode={isDarkMode}
               onRefreshData={() => {
                 api.getBuildings().then(setBuildings);
                 const updated = api.getCurrentUser();
                 if (updated) setCurrentUser(updated);
               }}
+            />
+          )}
+
+          {/* Teacher Passcode Authentication Modal ("11001100") */}
+          {showTeacherAuthModal && (
+            <TeacherAuthModal
+              isOpen={showTeacherAuthModal}
+              onSuccess={handleTeacherAuthSuccess}
+              onClose={() => setShowTeacherAuthModal(false)}
+              isDarkMode={isDarkMode}
             />
           )}
 
